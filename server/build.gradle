@@ -144,5 +144,7 @@ ktfmt {
     kotlinLangStyle()
 }
 
+build.dependsOn ktfmtCheck
+
 installDist.finalizedBy fixFilePermissions
 build.finalizedBy installDist
