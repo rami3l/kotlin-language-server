@@ -9,10 +9,13 @@ fun formatKotlinCode(
     options: FormattingOptions = FormattingOptions(4, true)
 ): String =
     format(
+        // If option.tabSize is 2 or 4, the generated KtfmtOptions instance concides with one of the
+        // two presets in
+        // https://github.com/facebookincubator/ktfmt/blob/d4718f643abd0999ba502caf5062c98a3218e88d/core/src/main/java/com/facebook/ktfmt/format/Formatter.kt#L45-L50
         KtfmtOptions(
             style = KtfmtOptions.Style.GOOGLE,
             blockIndent = options.tabSize,
-            continuationIndent = 2 * options.tabSize
+            continuationIndent = options.tabSize
         ),
         code
     )
