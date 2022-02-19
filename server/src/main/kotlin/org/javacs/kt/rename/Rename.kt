@@ -12,17 +12,23 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 fun renameSymbol(file: CompiledFile, cursor: Int, sp: SourcePath, newName: String): WorkspaceEdit? {
     val (declaration, location) = findDeclaration(file, cursor) ?: return null
     return declaration.let {
-        val declarationEdit = Either.forLeft<TextDocumentEdit, ResourceOperation>(TextDocumentEdit(
-            VersionedTextDocumentIdentifier().apply { uri = location.uri },
-            listOf(TextEdit(location.range, newName))
-        ))
+        val declarationEdit =
+            Either.forLeft<TextDocumentEdit, ResourceOperation>(
+                TextDocumentEdit(
+                    VersionedTextDocumentIdentifier().apply { uri = location.uri },
+                    listOf(TextEdit(location.range, newName))
+                )
+            )
 
-        val referenceEdits = findReferences(declaration, sp).map {
-            Either.forLeft<TextDocumentEdit, ResourceOperation>(TextDocumentEdit(
-                VersionedTextDocumentIdentifier().apply { uri = it.uri },
-                listOf(TextEdit(it.range, newName))
-            ))
-        }
+        val referenceEdits =
+            findReferences(declaration, sp).map {
+                Either.forLeft<TextDocumentEdit, ResourceOperation>(
+                    TextDocumentEdit(
+                        VersionedTextDocumentIdentifier().apply { uri = it.uri },
+                        listOf(TextEdit(it.range, newName))
+                    )
+                )
+            }
 
         WorkspaceEdit(listOf(declarationEdit) + referenceEdits)
     }
@@ -33,11 +39,7 @@ private fun findDeclaration(file: CompiledFile, cursor: Int): Pair<KtNamedDeclar
     val psi = target.findPsi()
 
     return if (psi is KtNamedDeclaration) {
-        psi.nameIdentifier?.let {
-            location(it)?.let { location ->
-                Pair(psi, location)
-            }
-        }
+        psi.nameIdentifier?.let { location(it)?.let { location -> Pair(psi, location) } }
     } else {
         null
     }

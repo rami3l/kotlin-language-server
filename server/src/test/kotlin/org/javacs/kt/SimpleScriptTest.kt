@@ -1,17 +1,16 @@
 package org.javacs.kt
 
-import org.junit.*
-import org.junit.Assert.*
-import org.hamcrest.Matchers.*
-import kotlin.script.experimental.api.*
-import kotlin.script.experimental.jvm.jvm
-import kotlin.script.experimental.jvm.dependenciesFromCurrentContext
 import kotlin.script.experimental.annotations.KotlinScript
+import kotlin.script.experimental.api.*
+import kotlin.script.experimental.jvm.dependenciesFromCurrentContext
+import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvmhost.BasicJvmScriptingHost
 import kotlin.script.experimental.jvmhost.createJvmCompilationConfigurationFromTemplate
+import org.hamcrest.Matchers.*
+import org.junit.*
+import org.junit.Assert.*
 
-@KotlinScript(fileExtension = "simpleScript.kts")
-abstract class SimpleScript
+@KotlinScript(fileExtension = "simpleScript.kts") abstract class SimpleScript
 
 private data class CodeSnippet(
     override val text: String,
@@ -20,11 +19,10 @@ private data class CodeSnippet(
 ) : SourceCode
 
 private class SnippetRunner {
-    val config = createJvmCompilationConfigurationFromTemplate<SimpleScript> {
-        jvm {
-            dependenciesFromCurrentContext(wholeClasspath = true)
+    val config =
+        createJvmCompilationConfigurationFromTemplate<SimpleScript> {
+            jvm { dependenciesFromCurrentContext(wholeClasspath = true) }
         }
-    }
 
     fun eval(code: SourceCode): ResultWithDiagnostics<EvaluationResult> {
         return BasicJvmScriptingHost().eval(code, config, null)
@@ -43,7 +41,8 @@ class SimpleScriptTest {
         result = runner.eval(CodeSnippet("234 + 32"))
         assertNotError(result)
 
-        val resultValue = (result as ResultWithDiagnostics.Success).value.returnValue as ResultValue.Value
+        val resultValue =
+            (result as ResultWithDiagnostics.Success).value.returnValue as ResultValue.Value
         // TODO:
         // assertThat(resultValue.type, equalTo("Int"))
     }
@@ -54,4 +53,3 @@ class SimpleScriptTest {
         }
     }
 }
-

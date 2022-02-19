@@ -1,12 +1,12 @@
 package org.javacs.kt
 
-import org.eclipse.lsp4j.*
-import org.eclipse.lsp4j.services.LanguageClient
-import org.junit.Before
-import org.junit.After
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
+import org.eclipse.lsp4j.*
+import org.eclipse.lsp4j.services.LanguageClient
+import org.junit.After
+import org.junit.Before
 
 abstract class LanguageServerTestFixture(relativeWorkspaceRoot: String) : LanguageClient {
     val workspaceRoot = absoluteWorkspaceRoot(relativeWorkspaceRoot)
@@ -20,22 +20,30 @@ abstract class LanguageServerTestFixture(relativeWorkspaceRoot: String) : Langua
 
     private fun createLanguageServer(): KotlinLanguageServer {
         val languageServer = KotlinLanguageServer()
-        val init = InitializeParams().apply {
-            capabilities = ClientCapabilities().apply {
-                textDocument = TextDocumentClientCapabilities().apply {
-                    completion = CompletionCapabilities().apply {
-                        completionItem = CompletionItemCapabilities().apply {
-                            snippetSupport = true
-                        }
+        val init =
+            InitializeParams().apply {
+                capabilities =
+                    ClientCapabilities().apply {
+                        textDocument =
+                            TextDocumentClientCapabilities().apply {
+                                completion =
+                                    CompletionCapabilities().apply {
+                                        completionItem =
+                                            CompletionItemCapabilities().apply {
+                                                snippetSupport = true
+                                            }
+                                    }
+                            }
                     }
-                }
             }
-        }
 
-        init.workspaceFolders = listOf(WorkspaceFolder().apply {
-            name = workspaceRoot.fileName.toString()
-            uri = workspaceRoot.toUri().toString()
-        })
+        init.workspaceFolders =
+            listOf(
+                WorkspaceFolder().apply {
+                    name = workspaceRoot.fileName.toString()
+                    uri = workspaceRoot.toUri().toString()
+                }
+            )
         languageServer.sourcePath.indexEnabled = false
         languageServer.connect(this)
         languageServer.initialize(init).join()
@@ -43,11 +51,13 @@ abstract class LanguageServerTestFixture(relativeWorkspaceRoot: String) : Langua
         return languageServer
     }
 
-    @After fun closeLanguageServer() {
+    @After
+    fun closeLanguageServer() {
         languageServer.close()
     }
 
-    @After fun printMemoryUsage() {
+    @After
+    fun printMemoryUsage() {
         val rt = Runtime.getRuntime()
         val total = rt.totalMemory().toDouble() / 1000000.0
         val free = rt.freeMemory().toDouble() / 1000000.0
@@ -55,7 +65,9 @@ abstract class LanguageServerTestFixture(relativeWorkspaceRoot: String) : Langua
     }
 
     fun renameParams(relativePath: String, line: Int, column: Int, newName: String): RenameParams =
-        textDocumentPosition(relativePath, line, column).run { RenameParams(textDocument, position, newName) }
+        textDocumentPosition(relativePath, line, column).run {
+            RenameParams(textDocument, position, newName)
+        }
 
     fun completionParams(relativePath: String, line: Int, column: Int): CompletionParams {
         val file = workspaceRoot.resolve(relativePath)
@@ -65,10 +77,21 @@ abstract class LanguageServerTestFixture(relativeWorkspaceRoot: String) : Langua
         return CompletionParams(fileId, position)
     }
 
-    fun textDocumentPosition(relativePath: String, line: Int, column: Int): TextDocumentPositionParams =
-        textDocumentPosition(relativePath, position(line, column))
+    fun textDocumentPosition(
+        relativePath: String,
+        line: Int,
+        column: Int
+    ): TextDocumentPositionParams = textDocumentPosition(relativePath, position(line, column))
 
-    fun codeActionParams(relativePath: String, startLine: Int, startColumn: Int, endLine: Int, endColumn: Int, diagnostics: List<Diagnostic>, only: List<String>): CodeActionParams {
+    fun codeActionParams(
+        relativePath: String,
+        startLine: Int,
+        startColumn: Int,
+        endLine: Int,
+        endColumn: Int,
+        diagnostics: List<Diagnostic>,
+        only: List<String>
+    ): CodeActionParams {
         val file = workspaceRoot.resolve(relativePath)
         val fileId = TextDocumentIdentifier(file.toUri().toString())
         val range = range(startLine, startColumn, endLine, endColumn)
@@ -84,16 +107,24 @@ abstract class LanguageServerTestFixture(relativeWorkspaceRoot: String) : Langua
         textDocumentPosition(relativePath, 0, 0).run { SemanticTokensParams(textDocument) }
 
     fun semanticTokensRangeParams(relativePath: String, range: Range): SemanticTokensRangeParams =
-        textDocumentPosition(relativePath, 0, 0).run { SemanticTokensRangeParams(textDocument, range) }
+        textDocumentPosition(relativePath, 0, 0).run {
+            SemanticTokensRangeParams(textDocument, range)
+        }
 
     fun signatureHelpParams(relativePath: String, line: Int, column: Int): SignatureHelpParams =
-        textDocumentPosition(relativePath, line, column).run { SignatureHelpParams(textDocument, position) }
+        textDocumentPosition(relativePath, line, column).run {
+            SignatureHelpParams(textDocument, position)
+        }
 
     fun definitionParams(relativePath: String, line: Int, column: Int): DefinitionParams =
-        textDocumentPosition(relativePath, line, column).run { DefinitionParams(textDocument, position) }
+        textDocumentPosition(relativePath, line, column).run {
+            DefinitionParams(textDocument, position)
+        }
 
     fun definitionParams(relativePath: String, position: Position): DefinitionParams =
-        textDocumentPosition(relativePath, position).run { DefinitionParams(textDocument, position) }
+        textDocumentPosition(relativePath, position).run {
+            DefinitionParams(textDocument, position)
+        }
 
     fun textDocumentPosition(relativePath: String, position: Position): TextDocumentPositionParams {
         val file = workspaceRoot.resolve(relativePath)
@@ -106,8 +137,7 @@ abstract class LanguageServerTestFixture(relativeWorkspaceRoot: String) : Langua
     fun range(startLine: Int, startColumn: Int, endLine: Int, endColumn: Int) =
         Range(position(startLine, startColumn), position(endLine, endColumn))
 
-    fun uri(relativePath: String) =
-            workspaceRoot.resolve(relativePath).toUri()
+    fun uri(relativePath: String) = workspaceRoot.resolve(relativePath).toUri()
 
     fun referenceParams(relativePath: String, line: Int, column: Int): ReferenceParams =
         ReferenceParams(
@@ -117,7 +147,7 @@ abstract class LanguageServerTestFixture(relativeWorkspaceRoot: String) : Langua
         )
 
     fun open(relativePath: String) {
-        val file =  workspaceRoot.resolve(relativePath)
+        val file = workspaceRoot.resolve(relativePath)
         val content = file.toFile().readText()
         val document = TextDocumentItem(file.toUri().toString(), "Kotlin", 0, content)
 
@@ -140,7 +170,9 @@ abstract class LanguageServerTestFixture(relativeWorkspaceRoot: String) : Langua
         this.diagnostics.addAll(diagnostics.diagnostics)
     }
 
-    override fun showMessageRequest(request: ShowMessageRequestParams?): CompletableFuture<MessageActionItem>? {
+    override fun showMessageRequest(
+        request: ShowMessageRequestParams?
+    ): CompletableFuture<MessageActionItem>? {
         println(request.toString())
         return null
     }
@@ -163,8 +195,10 @@ fun testResourcesRoot(): Path {
     return Paths.get(anchorTxt).parent!!
 }
 
-open class SingleFileTestFixture(relativeWorkspaceRoot: String, val file: String) : LanguageServerTestFixture(relativeWorkspaceRoot) {
-    @Before fun openFile() {
+open class SingleFileTestFixture(relativeWorkspaceRoot: String, val file: String) :
+    LanguageServerTestFixture(relativeWorkspaceRoot) {
+    @Before
+    fun openFile() {
         open(file)
 
         // Wait for lint, so subsequent replace(...) operations cause recovery

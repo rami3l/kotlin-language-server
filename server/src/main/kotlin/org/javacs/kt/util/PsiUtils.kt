@@ -1,14 +1,16 @@
 package org.javacs.kt.util
 
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import java.nio.file.Path
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
-inline fun<reified Find> PsiElement.findParent() =
-        this.parentsWithSelf.filterIsInstance<Find>().firstOrNull()
+inline fun <reified Find> PsiElement.findParent() =
+    this.parentsWithSelf.filterIsInstance<Find>().firstOrNull()
 
-fun PsiElement.preOrderTraversal(shouldTraverse: (PsiElement) -> Boolean = { true }): Sequence<PsiElement> {
+fun PsiElement.preOrderTraversal(
+    shouldTraverse: (PsiElement) -> Boolean = { true }
+): Sequence<PsiElement> {
     val root = this
 
     return sequence {
@@ -24,5 +26,4 @@ fun PsiElement.preOrderTraversal(shouldTraverse: (PsiElement) -> Boolean = { tru
     }
 }
 
-fun PsiFile.toPath(): Path =
-        winCompatiblePathOf(this.originalFile.viewProvider.virtualFile.path)
+fun PsiFile.toPath(): Path = winCompatiblePathOf(this.originalFile.viewProvider.virtualFile.path)

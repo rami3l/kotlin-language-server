@@ -1,18 +1,15 @@
 package org.javacs.kt
 
-import java.io.PrintWriter
-import java.io.StringWriter
+import java.time.Instant
 import java.util.*
-import java.util.logging.Formatter
-import java.util.logging.LogRecord
 import java.util.logging.Handler
 import java.util.logging.Level
-import java.time.Instant
+import java.util.logging.LogRecord
 import org.javacs.kt.util.DelegatePrintStream
 
 val LOG = Logger()
 
-private class JULRedirector(private val downstream: Logger): Handler() {
+private class JULRedirector(private val downstream: Logger) : Handler() {
     override fun publish(record: LogRecord) {
         when (record.level) {
             Level.SEVERE -> downstream.error(record.message)
@@ -41,10 +38,7 @@ enum class LogLevel(val value: Int) {
     ALL(-100)
 }
 
-class LogMessage(
-    val level: LogLevel,
-    val message: String
-) {
+class LogMessage(val level: LogLevel, val message: String) {
     val formatted: String
         get() = "[$level] $message"
 }
@@ -54,7 +48,9 @@ class Logger {
     private var errBackend: ((LogMessage) -> Unit)? = null
     private val outQueue: Queue<LogMessage> = ArrayDeque()
     private val errQueue: Queue<LogMessage> = ArrayDeque()
-    private val errStream = DelegatePrintStream { logError(LogMessage(LogLevel.ERROR, it.trimEnd())) }
+    private val errStream = DelegatePrintStream {
+        logError(LogMessage(LogLevel.ERROR, it.trimEnd()))
+    }
     val outStream = DelegatePrintStream { log(LogMessage(LogLevel.INFO, it.trimEnd())) }
 
     private val newline = System.lineSeparator()
@@ -77,7 +73,11 @@ class Logger {
         }
     }
 
-    private fun logWithPlaceholdersAt(msgLevel: LogLevel, msg: String, placeholders: Array<out Any?>) {
+    private fun logWithPlaceholdersAt(
+        msgLevel: LogLevel,
+        msg: String,
+        placeholders: Array<out Any?>
+    ) {
         if (level.value <= msgLevel.value) {
             log(LogMessage(msgLevel, format(insertPlaceholders(msg, placeholders))))
         }
@@ -93,17 +93,23 @@ class Logger {
 
     // Convenience logging methods using the traditional placeholder syntax
 
-    fun error(msg: String, vararg placeholders: Any?) = logWithPlaceholdersAt(LogLevel.ERROR, msg, placeholders)
+    fun error(msg: String, vararg placeholders: Any?) =
+        logWithPlaceholdersAt(LogLevel.ERROR, msg, placeholders)
 
-    fun warn(msg: String, vararg placeholders: Any?) = logWithPlaceholdersAt(LogLevel.WARN, msg, placeholders)
+    fun warn(msg: String, vararg placeholders: Any?) =
+        logWithPlaceholdersAt(LogLevel.WARN, msg, placeholders)
 
-    fun info(msg: String, vararg placeholders: Any?) = logWithPlaceholdersAt(LogLevel.INFO, msg, placeholders)
+    fun info(msg: String, vararg placeholders: Any?) =
+        logWithPlaceholdersAt(LogLevel.INFO, msg, placeholders)
 
-    fun debug(msg: String, vararg placeholders: Any?) = logWithPlaceholdersAt(LogLevel.DEBUG, msg, placeholders)
+    fun debug(msg: String, vararg placeholders: Any?) =
+        logWithPlaceholdersAt(LogLevel.DEBUG, msg, placeholders)
 
-    fun trace(msg: String, vararg placeholders: Any?) = logWithPlaceholdersAt(LogLevel.TRACE, msg, placeholders)
+    fun trace(msg: String, vararg placeholders: Any?) =
+        logWithPlaceholdersAt(LogLevel.TRACE, msg, placeholders)
 
-    fun deepTrace(msg: String, vararg placeholders: Any?) = logWithPlaceholdersAt(LogLevel.DEEP_TRACE, msg, placeholders)
+    fun deepTrace(msg: String, vararg placeholders: Any?) =
+        logWithPlaceholdersAt(LogLevel.DEEP_TRACE, msg, placeholders)
 
     // Convenience logging methods using inlined lambdas
 
@@ -149,7 +155,8 @@ class Logger {
         while (charIndex < msgLength) {
             val currentChar = msg.get(charIndex)
             val nextChar = if (charIndex != lastIndex) msg.get(charIndex + 1) else '?'
-            if ((placeholderIndex < placeholders.size) && (currentChar == '{') && (nextChar == '}')) {
+            if ((placeholderIndex < placeholders.size) && (currentChar == '{') && (nextChar == '}')
+            ) {
                 result.append(placeholders[placeholderIndex] ?: "null")
                 placeholderIndex += 1
                 charIndex += 2
@@ -182,9 +189,9 @@ class Logger {
     }
 
     private fun shortenOrPad(str: String, length: Int): String =
-            if (str.length <= length) {
-                str.padEnd(length, ' ')
-            } else {
-                ".." + str.substring(str.length - length + 2)
-            }
+        if (str.length <= length) {
+            str.padEnd(length, ' ')
+        } else {
+            ".." + str.substring(str.length - length + 2)
+        }
 }

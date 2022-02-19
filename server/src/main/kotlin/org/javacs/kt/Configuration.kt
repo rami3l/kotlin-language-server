@@ -15,13 +15,13 @@ public data class LintingConfiguration(
 )
 
 public data class JVMConfiguration(
-    /** Which JVM target the Kotlin compiler uses. See Compiler.jvmTargetFrom for possible values. */
+    /**
+     * Which JVM target the Kotlin compiler uses. See Compiler.jvmTargetFrom for possible values.
+     */
     var target: String = "default"
 )
 
-public data class CompilerConfiguration(
-    val jvm: JVMConfiguration = JVMConfiguration()
-)
+public data class CompilerConfiguration(val jvm: JVMConfiguration = JVMConfiguration())
 
 public data class IndexingConfiguration(
     /** Whether an index of global symbols should be built in the background. */

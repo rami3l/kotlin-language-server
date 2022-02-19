@@ -1,40 +1,46 @@
 package org.javacs.kt.j2k
 
-import org.javacs.kt.LOG
 import com.intellij.psi.*
+import org.javacs.kt.LOG
 
 object JavaTypeConverter : PsiTypeVisitor<String>() {
     override fun visitType(type: PsiType): String {
         return type.presentableText
     }
 
-    override fun visitPrimitiveType(primitiveType: PsiPrimitiveType): String = when (primitiveType.canonicalText) {
-        "void" -> "Unit"
-        else -> primitiveType.canonicalText.replaceFirstChar { it.uppercaseChar() }
-    }
+    override fun visitPrimitiveType(primitiveType: PsiPrimitiveType): String =
+        when (primitiveType.canonicalText) {
+            "void" -> "Unit"
+            else -> primitiveType.canonicalText.replaceFirstChar { it.uppercaseChar() }
+        }
 
-    override fun visitArrayType(arrayType: PsiArrayType): String = when (try {
-        arrayType.componentType.canonicalText
-    } catch (e: IllegalStateException) {
-        LOG.warn("Error while fetching text representation of array type: {}", e)
-        "?"
-    }) {
-        "byte" -> "ByteArray"
-        "short" -> "ShortArray"
-        "int" -> "IntArray"
-        "long" -> "LongArray"
-        "char" -> "CharArray"
-        "boolean" -> "BooleanArray"
-        "float" -> "FloatArray"
-        "double" -> "DoubleArray"
-        else -> "Array<${arrayType.componentType.accept(this)}>"
-    }
+    override fun visitArrayType(arrayType: PsiArrayType): String =
+        when (try {
+                arrayType.componentType.canonicalText
+            } catch (e: IllegalStateException) {
+                LOG.warn("Error while fetching text representation of array type: {}", e)
+                "?"
+            }
+        ) {
+            "byte" -> "ByteArray"
+            "short" -> "ShortArray"
+            "int" -> "IntArray"
+            "long" -> "LongArray"
+            "char" -> "CharArray"
+            "boolean" -> "BooleanArray"
+            "float" -> "FloatArray"
+            "double" -> "DoubleArray"
+            else -> "Array<${arrayType.componentType.accept(this)}>"
+        }
 
     override fun visitClassType(classType: PsiClassType): String {
-        val translatedTypeArgs = classType.parameters.asSequence()
-            .map { it.accept(this) }
-            .joinToString(separator = ", ")
-            .let { if (it.isNotEmpty()) "<$it>" else "" }
+        val translatedTypeArgs =
+            classType
+                .parameters
+                .asSequence()
+                .map { it.accept(this) }
+                .joinToString(separator = ", ")
+                .let { if (it.isNotEmpty()) "<$it>" else "" }
         return "${platformType(classType.className)}$translatedTypeArgs"
     }
 

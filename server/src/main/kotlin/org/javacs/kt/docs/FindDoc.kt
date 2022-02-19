@@ -15,9 +15,11 @@ fun findDoc(declaration: DeclarationDescriptorWithSource): KDocTag? {
 
     return when (source) {
         is KtParameter -> {
-            var container = source.parents.filterIsInstance<KtDeclaration>().firstOrNull() ?: return null
+            var container =
+                source.parents.filterIsInstance<KtDeclaration>().firstOrNull() ?: return null
             if (container is KtPrimaryConstructor)
-                container = container.parents.filterIsInstance<KtDeclaration>().firstOrNull() ?: return null
+                container =
+                    container.parents.filterIsInstance<KtDeclaration>().firstOrNull() ?: return null
             val doc = container.docComment ?: return null
             val descendants = doc.preOrderTraversal()
             val tags = descendants.filterIsInstance<KDocTag>()
@@ -27,7 +29,8 @@ fun findDoc(declaration: DeclarationDescriptorWithSource): KDocTag? {
             return matchName.firstOrNull()
         }
         is KtPrimaryConstructor -> {
-            val container = source.parents.filterIsInstance<KtDeclaration>().firstOrNull() ?: return null
+            val container =
+                source.parents.filterIsInstance<KtDeclaration>().firstOrNull() ?: return null
             val doc = container.docComment ?: return null
             doc.findSectionByTag(KDocKnownTag.CONSTRUCTOR) ?: doc.getDefaultSection()
         }

@@ -3,30 +3,24 @@ package org.javacs.kt.position
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import kotlin.math.max
 import org.eclipse.lsp4j.Location
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import org.javacs.kt.LOG
 import org.javacs.kt.util.toPath
-import org.jetbrains.kotlin.descriptors.SourceFile
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
+import org.jetbrains.kotlin.descriptors.SourceFile
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.resolve.source.PsiSourceFile
-import kotlin.math.max
 
 fun extractRange(content: String, range: Range) =
-    content.substring(
-        offset(content, range.start),
-        offset(content, range.end)
-    )
+    content.substring(offset(content, range.start), offset(content, range.end))
 
-fun offset(content: String, position: Position) =
-    offset(content, position.line, position.character)
+fun offset(content: String, position: Position) = offset(content, position.line, position.character)
 
-/**
- * Convert from 0-based line and column to 0-based offset
- */
+/** Convert from 0-based line and column to 0-based offset */
 fun offset(content: String, line: Int, char: Int): Int {
     assert(!content.contains('\r'))
 
@@ -37,11 +31,9 @@ fun offset(content: String, line: Int, char: Int): Int {
     while (lineOffset < line) {
         val nextChar = reader.read()
 
-        if (nextChar == -1)
-            throw RuntimeException("Reached end of file before reaching line $line")
+        if (nextChar == -1) throw RuntimeException("Reached end of file before reaching line $line")
 
-        if (nextChar.toChar() == '\n')
-            lineOffset++
+        if (nextChar.toChar() == '\n') lineOffset++
 
         offset++
     }
@@ -50,8 +42,7 @@ fun offset(content: String, line: Int, char: Int): Int {
     while (charOffset < char) {
         val nextChar = reader.read()
 
-        if (nextChar == -1)
-            throw RuntimeException("Reached end of file before reaching char $char")
+        if (nextChar == -1) throw RuntimeException("Reached end of file before reaching char $char")
 
         charOffset++
         offset++
@@ -85,7 +76,7 @@ fun position(content: String, offset: Int): Position {
 }
 
 fun range(content: String, range: TextRange) =
-        Range(position(content, range.startOffset), position(content, range.endOffset))
+    Range(position(content, range.startOffset), position(content, range.endOffset))
 
 fun location(declaration: DeclarationDescriptor): Location? {
     val psiLocation = declaration.findPsi()?.let(::location)
@@ -115,16 +106,19 @@ val Range.isZero: Boolean
     get() = start.isZero && end.isZero
 
 fun location(expr: PsiElement): Location? {
-    val content = try { expr.containingFile?.text } catch (e: NullPointerException) { null }
+    val content =
+        try {
+            expr.containingFile?.text
+        } catch (e: NullPointerException) {
+            null
+        }
     val file = expr.containingFile.toURIString()
     return content?.let { Location(file, range(it, expr.textRange)) }
 }
 
 fun PsiFile.toURIString() = toPath().toUri().toString()
 
-/**
- * Region that has been changed
- */
+/** Region that has been changed */
 fun changedRegion(oldContent: String, newContent: String): Pair<TextRange, TextRange>? {
     if (oldContent == newContent) return null
 

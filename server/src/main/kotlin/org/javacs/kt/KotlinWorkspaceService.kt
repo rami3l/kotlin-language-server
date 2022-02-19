@@ -1,24 +1,21 @@
 package org.javacs.kt
 
-import com.intellij.openapi.project.Project
-import org.eclipse.lsp4j.*
-import org.eclipse.lsp4j.services.WorkspaceService
-import org.eclipse.lsp4j.services.LanguageClient
-import org.eclipse.lsp4j.services.LanguageClientAware
-import org.eclipse.lsp4j.jsonrpc.messages.Either
-import org.javacs.kt.symbols.workspaceSymbols
-import org.javacs.kt.command.JAVA_TO_KOTLIN_COMMAND
-import org.javacs.kt.j2k.convertJavaToKotlin
-import org.javacs.kt.KotlinTextDocumentService
-import org.javacs.kt.position.extractRange
-import org.javacs.kt.util.filePath
-import org.javacs.kt.util.parseURI
-import java.net.URI
+import com.google.gson.Gson
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
-import com.google.gson.JsonElement
-import com.google.gson.Gson
-import com.google.gson.JsonObject
+import org.eclipse.lsp4j.*
+import org.eclipse.lsp4j.jsonrpc.messages.Either
+import org.eclipse.lsp4j.services.LanguageClient
+import org.eclipse.lsp4j.services.LanguageClientAware
+import org.eclipse.lsp4j.services.WorkspaceService
+import org.javacs.kt.command.JAVA_TO_KOTLIN_COMMAND
+import org.javacs.kt.j2k.convertJavaToKotlin
+import org.javacs.kt.position.extractRange
+import org.javacs.kt.symbols.workspaceSymbols
+import org.javacs.kt.util.filePath
+import org.javacs.kt.util.parseURI
 
 class KotlinWorkspaceService(
     private val sf: SourceFiles,
@@ -46,12 +43,20 @@ class KotlinWorkspaceService(
                 val selectedJavaCode = extractRange(sp.content(parseURI(fileUri)), range)
                 val kotlinCode = convertJavaToKotlin(selectedJavaCode, cp.compiler)
 
-                languageClient?.applyEdit(ApplyWorkspaceEditParams(WorkspaceEdit(listOf(Either.forLeft<TextDocumentEdit, ResourceOperation>(
-                    TextDocumentEdit(
-                        VersionedTextDocumentIdentifier().apply { uri = fileUri },
-                        listOf(TextEdit(range, kotlinCode))
+                languageClient?.applyEdit(
+                    ApplyWorkspaceEditParams(
+                        WorkspaceEdit(
+                            listOf(
+                                Either.forLeft<TextDocumentEdit, ResourceOperation>(
+                                    TextDocumentEdit(
+                                        VersionedTextDocumentIdentifier().apply { uri = fileUri },
+                                        listOf(TextEdit(range, kotlinCode))
+                                    )
+                                )
+                            )
+                        )
                     )
-                )))))
+                )
             }
         }
 
@@ -126,16 +131,16 @@ class KotlinWorkspaceService(
             // Update indexing options
             get("indexing")?.asJsonObject?.apply {
                 val indexing = config.indexing
-                get("enabled")?.asBoolean?.let {
-                    indexing.enabled = it
-                }
+                get("enabled")?.asBoolean?.let { indexing.enabled = it }
             }
 
             // Update options about external sources e.g. JAR files, decompilers, etc
             get("externalSources")?.asJsonObject?.apply {
                 val externalSources = config.externalSources
                 get("useKlsScheme")?.asBoolean?.let { externalSources.useKlsScheme = it }
-                get("autoConvertToKotlin")?.asBoolean?.let { externalSources.autoConvertToKotlin = it }
+                get("autoConvertToKotlin")?.asBoolean?.let {
+                    externalSources.autoConvertToKotlin = it
+                }
             }
         }
 

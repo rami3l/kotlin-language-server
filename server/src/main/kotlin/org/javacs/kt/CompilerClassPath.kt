@@ -1,16 +1,16 @@
 package org.javacs.kt
 
+import java.io.Closeable
+import java.nio.file.FileSystems
+import java.nio.file.Path
 import org.javacs.kt.classpath.ClassPathEntry
 import org.javacs.kt.classpath.defaultClassPathResolver
 import org.javacs.kt.compiler.Compiler
 import org.javacs.kt.util.AsyncExecutor
-import java.io.Closeable
-import java.nio.file.FileSystems
-import java.nio.file.Path
 
 /**
- * Manages the class path (compiled JARs, etc), the Java source path
- * and the compiler. Note that Kotlin sources are stored in SourcePath.
+ * Manages the class path (compiled JARs, etc), the Java source path and the compiler. Note that
+ * Kotlin sources are stored in SourcePath.
  */
 class CompilerClassPath(private val config: CompilerConfiguration) : Closeable {
     private val workspaceRoots = mutableSetOf<Path>()
@@ -18,7 +18,8 @@ class CompilerClassPath(private val config: CompilerConfiguration) : Closeable {
     private val buildScriptClassPath = mutableSetOf<Path>()
     val classPath = mutableSetOf<ClassPathEntry>()
 
-    var compiler = Compiler(javaSourcePath, classPath.map { it.compiledJar }.toSet(), buildScriptClassPath)
+    var compiler =
+        Compiler(javaSourcePath, classPath.map { it.compiledJar }.toSet(), buildScriptClassPath)
         private set
 
     private val async = AsyncExecutor()
@@ -49,7 +50,9 @@ class CompilerClassPath(private val config: CompilerConfiguration) : Closeable {
             async.compute {
                 val newClassPathWithSources = resolver.classpathWithSources
                 synchronized(classPath) {
-                    syncPaths(classPath, newClassPathWithSources, "class path with sources") { it.compiledJar }
+                    syncPaths(classPath, newClassPathWithSources, "class path with sources") {
+                        it.compiledJar
+                    }
                 }
             }
         }
@@ -58,7 +61,11 @@ class CompilerClassPath(private val config: CompilerConfiguration) : Closeable {
             LOG.info("Update build script path")
             val newBuildScriptClassPath = resolver.buildScriptClasspathOrEmpty
             if (newBuildScriptClassPath != buildScriptClassPath) {
-                syncPaths(buildScriptClassPath, newBuildScriptClassPath, "build script class path") { it }
+                syncPaths(
+                    buildScriptClassPath,
+                    newBuildScriptClassPath,
+                    "build script class path"
+                ) { it }
                 refreshCompiler = true
             }
         }
@@ -66,7 +73,12 @@ class CompilerClassPath(private val config: CompilerConfiguration) : Closeable {
         if (refreshCompiler) {
             LOG.info("Reinstantiating compiler")
             compiler.close()
-            compiler = Compiler(javaSourcePath, classPath.map { it.compiledJar }.toSet(), buildScriptClassPath)
+            compiler =
+                Compiler(
+                    javaSourcePath,
+                    classPath.map { it.compiledJar }.toSet(),
+                    buildScriptClassPath
+                )
             updateCompilerConfiguration()
         }
 
@@ -125,7 +137,11 @@ class CompilerClassPath(private val config: CompilerConfiguration) : Closeable {
         val buildScript = isBuildScript(file)
         val javaSource = isJavaSource(file)
         if (buildScript || javaSource) {
-            return refresh(updateClassPath = buildScript, updateBuildScriptClassPath = false, updateJavaSourcePath = javaSource)
+            return refresh(
+                updateClassPath = buildScript,
+                updateBuildScriptClassPath = false,
+                updateJavaSourcePath = javaSource
+            )
         } else {
             return false
         }
@@ -133,7 +149,10 @@ class CompilerClassPath(private val config: CompilerConfiguration) : Closeable {
 
     private fun isJavaSource(file: Path): Boolean = file.fileName.toString().endsWith(".java")
 
-    private fun isBuildScript(file: Path): Boolean = file.fileName.toString().let { it == "pom.xml" || it == "build.gradle" || it == "build.gradle.kts" }
+    private fun isBuildScript(file: Path): Boolean =
+        file.fileName.toString().let {
+            it == "pom.xml" || it == "build.gradle" || it == "build.gradle.kts"
+        }
 
     override fun close() {
         compiler.close()

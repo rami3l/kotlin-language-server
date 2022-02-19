@@ -1,15 +1,18 @@
 package org.javacs.kt
 
-import org.javacs.kt.util.LoggingMessageCollector
-import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
-import org.jetbrains.kotlin.cli.jvm.compiler.CliBindingTrace
-import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
-import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
+import java.io.Closeable
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
+import org.javacs.kt.util.LoggingMessageCollector
+import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
+import org.jetbrains.kotlin.cli.jvm.compiler.CliBindingTrace
+import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
+import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
@@ -26,9 +29,6 @@ import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.runner.Runner
 import org.openjdk.jmh.runner.RunnerException
 import org.openjdk.jmh.runner.options.OptionsBuilder
-import java.io.Closeable
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 
 class OneFilePerformance {
     @State(Scope.Thread)
@@ -39,30 +39,45 @@ class OneFilePerformance {
             config.put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, LoggingMessageCollector)
         }
         internal val disposable = Disposer.newDisposable()
-        internal var env = KotlinCoreEnvironment.createForProduction(
-            disposable, config, EnvironmentConfigFiles.JVM_CONFIG_FILES
-        )
+        internal var env =
+            KotlinCoreEnvironment.createForProduction(
+                disposable,
+                config,
+                EnvironmentConfigFiles.JVM_CONFIG_FILES
+            )
         internal var parser = KtPsiFactory(env.project)
-        internal var fileSystem = VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL)
+        internal var fileSystem =
+            VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL)
         internal var bigFile = openFile("/kotlinCompilerPerformance/BigFile.kt")
 
         internal fun openFile(resourcePath: String?): KtFile {
             val locate = OneFilePerformance::class.java.getResource(resourcePath)
-            val file = fileSystem.findFileByPath(URLDecoder.decode(locate.path, StandardCharsets.UTF_8.toString()))
+            val file =
+                fileSystem.findFileByPath(
+                    URLDecoder.decode(locate.path, StandardCharsets.UTF_8.toString())
+                )
             return PsiManager.getInstance(env.project).findFile(file!!) as KtFile
         }
 
-        internal fun compile(compile: Collection<KtFile>, sourcePath: Collection<KtFile>): BindingTraceContext {
+        internal fun compile(
+            compile: Collection<KtFile>,
+            sourcePath: Collection<KtFile>
+        ): BindingTraceContext {
             val trace = CliBindingTrace()
-            val container = CompilerFixtures.createContainer(
-                env.project,
-                sourcePath,
-                trace,
-                env.configuration,
-                env::createPackagePartProvider
-            )
+            val container =
+                CompilerFixtures.createContainer(
+                    env.project,
+                    sourcePath,
+                    trace,
+                    env.configuration,
+                    env::createPackagePartProvider
+                )
             val analyze = container.create(LazyTopDownAnalyzer::class.java)
-            analyze.analyzeDeclarations(TopDownAnalysisMode.TopLevelDeclarations, compile, DataFlowInfoFactory.EMPTY)
+            analyze.analyzeDeclarations(
+                TopDownAnalysisMode.TopLevelDeclarations,
+                compile,
+                DataFlowInfoFactory.EMPTY
+            )
             return trace
         }
 
@@ -83,7 +98,8 @@ class OneFilePerformance {
         val smallFile = state.openFile("/kotlinCompilerPerformance/ReferencesBigFile.kt")
         val analyze = state.compile(listOf(smallFile), listOf(smallFile, state.bigFile))
         // Check reference
-        val ref = PsiTreeUtil.getNonStrictParentOfType(smallFile.findElementAt(80), KtElement::class.java)
+        val ref =
+            PsiTreeUtil.getNonStrictParentOfType(smallFile.findElementAt(80), KtElement::class.java)
         val call = ref.getParentResolvedCall(analyze.getBindingContext(), false)
         if (!call!!.getCandidateDescriptor().getName().asString().equals("max"))
             throw RuntimeException("Expected BigFile.max but found " + call)
@@ -95,7 +111,8 @@ class OneFilePerformance {
         val smallFile = state.openFile("/kotlinCompilerPerformance/ReferencesBigFile.kt")
         val analyze = state.compile(listOf(smallFile, bigFile), listOf(smallFile, bigFile))
         // Check reference
-        val ref = PsiTreeUtil.getNonStrictParentOfType(smallFile.findElementAt(80), KtElement::class.java)
+        val ref =
+            PsiTreeUtil.getNonStrictParentOfType(smallFile.findElementAt(80), KtElement::class.java)
         val call = ref.getParentResolvedCall(analyze.getBindingContext(), false)
         if (!call!!.getCandidateDescriptor().getName().asString().equals("max"))
             throw RuntimeException("Expected BigFile.max but found " + call)
@@ -103,9 +120,7 @@ class OneFilePerformance {
 
     @Test
     fun checkRecompileBoth() {
-        ReusableParts().use { state ->
-            recompileBoth(state)
-        }
+        ReusableParts().use { state -> recompileBoth(state) }
     }
 
     @Test
@@ -118,8 +133,11 @@ class OneFilePerformance {
 
     companion object {
         @Throws(RunnerException::class, InterruptedException::class)
-        @JvmStatic fun main(args: Array<String>) {
-            val opt = OptionsBuilder().include(OneFilePerformance::class.java.getSimpleName())
+        @JvmStatic
+        fun main(args: Array<String>) {
+            val opt =
+                OptionsBuilder()
+                    .include(OneFilePerformance::class.java.getSimpleName())
                     .forks(1)
                     .threads(1)
                     .warmupIterations(5)

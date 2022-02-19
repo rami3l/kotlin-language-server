@@ -1,15 +1,15 @@
 package org.javacs.kt.progress
 
-import org.eclipse.lsp4j.services.LanguageClient
-import org.eclipse.lsp4j.jsonrpc.messages.Either
-import org.eclipse.lsp4j.ProgressParams
-import org.eclipse.lsp4j.WorkDoneProgressNotification
-import org.eclipse.lsp4j.WorkDoneProgressBegin
-import org.eclipse.lsp4j.WorkDoneProgressReport
-import org.eclipse.lsp4j.WorkDoneProgressEnd
-import org.eclipse.lsp4j.WorkDoneProgressCreateParams
-import java.util.concurrent.CompletableFuture
 import java.util.UUID
+import java.util.concurrent.CompletableFuture
+import org.eclipse.lsp4j.ProgressParams
+import org.eclipse.lsp4j.WorkDoneProgressBegin
+import org.eclipse.lsp4j.WorkDoneProgressCreateParams
+import org.eclipse.lsp4j.WorkDoneProgressEnd
+import org.eclipse.lsp4j.WorkDoneProgressNotification
+import org.eclipse.lsp4j.WorkDoneProgressReport
+import org.eclipse.lsp4j.jsonrpc.messages.Either
+import org.eclipse.lsp4j.services.LanguageClient
 
 class LanguageClientProgress(
     private val label: String,
@@ -17,17 +17,21 @@ class LanguageClientProgress(
     private val client: LanguageClient
 ) : Progress {
     init {
-        reportProgress(WorkDoneProgressBegin().also {
-            it.title = "Kotlin: $label"
-            it.percentage = 0
-        })
+        reportProgress(
+            WorkDoneProgressBegin().also {
+                it.title = "Kotlin: $label"
+                it.percentage = 0
+            }
+        )
     }
 
     override fun update(message: String?, percent: Int?) {
-        reportProgress(WorkDoneProgressReport().also {
-            it.message = message
-            it.percentage = percent
-        })
+        reportProgress(
+            WorkDoneProgressReport().also {
+                it.message = message
+                it.percentage = percent
+            }
+        )
     }
 
     override fun close() {
@@ -41,10 +45,7 @@ class LanguageClientProgress(
     class Factory(private val client: LanguageClient) : Progress.Factory {
         override fun create(label: String): CompletableFuture<Progress> {
             val token = Either.forLeft<String, Int>(UUID.randomUUID().toString())
-            return client
-                .createProgress(WorkDoneProgressCreateParams().also {
-                    it.token = token
-                })
+            return client.createProgress(WorkDoneProgressCreateParams().also { it.token = token })
                 .thenApply { LanguageClientProgress(label, token, client) }
         }
     }
